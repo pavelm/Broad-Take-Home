@@ -1,5 +1,4 @@
 import logging
-import time
 from enum import IntEnum
 import requests
 
@@ -33,8 +32,15 @@ class MBTARoutesFetcher:
             logging.error(f"Failed to fetch data from MBTA API: {str(e)}")
             return []
    
-    # get the long names from the subway_routes
-    def get_long_names(self, subway_routes):
-        return list(map(lambda route: route['attributes']['long_name'], subway_routes))
 
-   
+    # appending each attribute to the json response 
+    def get_nested_value(self, response, attribute):
+        for key in attribute:
+            response = response[key]
+        return response
+    
+    # capable of reaching any part of data without creating duplicate functions appending different attributes to the end of the json object
+    def get_route_data(self, subway_routes, attributes):
+        return list(map(lambda subway_route: self.get_nested_value(subway_route, attributes), subway_routes))
+
+
