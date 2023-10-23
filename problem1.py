@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env
 load_dotenv()
-
 API_BASE_URL = os.getenv("API_BASE_URL")
 API_KEY = os.getenv("API_KEY")
 
@@ -23,7 +22,7 @@ def main():
     mbta_routes = mbtaRoutesFetcher.fetch_mbta_routes([RailType.LIGHT, RailType.HEAVY])
     
     # get the long names from mbta_routes
-    mbta_routes_long_names = mbtaRoutesFetcher.get_long_names(mbta_routes)
+    mbta_routes_long_names = mbtaRoutesFetcher.get_route_data(mbta_routes, ['attributes', 'long_name'])
     
     # print the long names of the mbta routes
     list(map(print, mbta_routes_long_names))
