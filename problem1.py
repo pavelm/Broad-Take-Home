@@ -2,7 +2,6 @@ import logging
 import time
 from MBTARoutesFetcher import MBTARoutesFetcher, RailType
 import os
-
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -13,8 +12,6 @@ API_KEY = os.getenv("API_KEY")
 
 
 logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
-
-
     
 def main():
     start = time.time()
@@ -32,7 +29,7 @@ def main():
     list(map(print, mbta_routes_long_names))
 
     end = time.time()
-    
+
     logging.info("Run time: " + str(end - start))
 
 if __name__ == "__main__":
