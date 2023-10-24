@@ -1,10 +1,11 @@
-from MBTARoutesFetcher import MBTARoutesFetcher, RailType
+from MBTARoutesFetcher import MBTARoutesFetcher
 from MBTAStopsFetcher import MBTAStopsFetcher
+from MBTAConnectingFetcher import MBTAConnectingFetcher
+from RailTypeEnum import RailType
 import os
 from dotenv import load_dotenv
 import logging
 import time
-from problem2 import get_all_stops, get_connecting_stops, get_connecting_stops_and_route
 
 logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
 
@@ -89,6 +90,7 @@ def main():
 
     mbtaRoutesFetcher = MBTARoutesFetcher(API_BASE_URL, API_KEY)
     mbtaStopsFetcher = MBTAStopsFetcher(API_BASE_URL, API_KEY)
+    mbtaConnectingFetcher = MBTAConnectingFetcher(API_BASE_URL, API_KEY)
 
     # get all mbta_routes (an array of all mbta_routes with Light and Heavy Rail Types)
     mbta_routes = mbtaRoutesFetcher.fetch_mbta_routes([RailType.LIGHT, RailType.HEAVY])
@@ -99,17 +101,11 @@ def main():
     # get the routes and their corresponding stops
     dict_of_routes_and_stops = mbtaStopsFetcher.run_get_dict_of_routes_and_stops(list_of_subway_route_ids, mbta_routes_long_names)
 
-    # all stops
-    all_stops = get_all_stops(dict_of_routes_and_stops)
+    connecting_stops = mbtaConnectingFetcher.get_connecting_stops(dict_of_routes_and_stops)
 
-    # all the connecting stops 
-    connecting_stops = get_connecting_stops(all_stops)
-
-    # every connecting stop and its associated route
-    connecting_stops_and_route = get_connecting_stops_and_route(dict_of_routes_and_stops, connecting_stops)
-
+    connecting_stops_and_route = mbtaConnectingFetcher.get_connecting_stops_and_route(dict_of_routes_and_stops, connecting_stops)
+    
     line_dict = get_line_dict(connecting_stops_and_route, dict_of_routes_and_stops)
-
 
     logging.info(find_subway_path(start_location, finish_location, dict_of_routes_and_stops, line_dict))
 

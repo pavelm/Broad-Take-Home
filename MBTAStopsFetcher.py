@@ -1,15 +1,9 @@
 import logging
-from enum import IntEnum
 import asyncio
 import aiohttp
 
 # Set up logging
 logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
-
-# Create an enumeration for RailType
-class RailType(IntEnum):
-    LIGHT = 0
-    HEAVY = 1
 
 class MBTAStopsFetcher:
     def __init__(self, api_base_url, api_key):

@@ -1,8 +1,9 @@
 import logging
 import time
-from collections import Counter, OrderedDict
-from MBTARoutesFetcher import MBTARoutesFetcher, RailType
+from MBTARoutesFetcher import MBTARoutesFetcher
 from MBTAStopsFetcher import MBTAStopsFetcher
+from MBTAConnectingFetcher import MBTAConnectingFetcher
+from RailTypeEnum import RailType
 from dotenv import load_dotenv
 import os
 
@@ -12,37 +13,6 @@ API_KEY = os.getenv("API_KEY")
 
 logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
 
-
-def get_all_stops(route_stops):
-    all_stops = []
-
-    for stops in route_stops.values():
-        if isinstance(stops, dict):
-            get_all_stops(stops, all_stops)
-        elif isinstance(stops, list):
-            all_stops.extend(stops)
-
-    return all_stops
-
-def get_connecting_stops(all_stops, min_count=2):
-    stop_counts = Counter(all_stops)
-
-    # Filter stops based on the minimum count
-    filtered_stops = {stop: count for stop, count in stop_counts.items() if count >= min_count}
-
-    # Sort the stops by count in descending order
-    sorted_stops = dict(sorted(filtered_stops.items(), key=lambda item: item[1], reverse=True))
-
-    return sorted_stops
-
-def get_connecting_stops_and_route(route_stops, stop_counts):
-    connecting_stops = {}
-    
-    for stop, count in stop_counts.items():
-        if count > 1:
-            connecting_stops[stop] = [route for route, stops in route_stops.items() if stop in stops]
-
-    return connecting_stops
 
 def most_and_least_elements(dictionary):
     if not dictionary:
@@ -63,7 +33,7 @@ def most_and_least_elements(dictionary):
     logging.info("Route with the least number of stops: %s", min_key)
     logging.info("Number of stops: %s", min_elements)
 
-def log_multi_route_stops(subway_stops):
+def log_subway_stops_and_routes(subway_stops):
     if not subway_stops:
         logging.info("The subway stops dictionary is empty.")
         return
@@ -83,6 +53,7 @@ def main():
     # create class object  
     mbtaRoutesFetcher = MBTARoutesFetcher(API_BASE_URL, API_KEY)
     mbtaStopsFetcher = MBTAStopsFetcher(API_BASE_URL, API_KEY)
+    mbtaConnectingFetcher = MBTAConnectingFetcher(API_BASE_URL, API_KEY)
 
     # get all mbta_routes (an array of all mbta_routes with Light and Heavy Rail Types)
     mbta_routes = mbtaRoutesFetcher.fetch_mbta_routes([RailType.LIGHT, RailType.HEAVY])
@@ -91,18 +62,15 @@ def main():
     mbta_routes_long_names = mbtaRoutesFetcher.get_route_data(mbta_routes, ['attributes', 'long_name'])
 
     # get the routes and their corresponding stops
-    route_stops = mbtaStopsFetcher.run_get_dict_of_routes_and_stops(list_of_subway_route_ids, mbta_routes_long_names)
+    dict_of_routes_and_stops = mbtaStopsFetcher.run_get_dict_of_routes_and_stops(list_of_subway_route_ids, mbta_routes_long_names)
 
-    most_and_least_elements(route_stops)
+    most_and_least_elements(dict_of_routes_and_stops)
 
-    all_stops = get_all_stops(route_stops)
+    connecting_stops = mbtaConnectingFetcher.get_connecting_stops(dict_of_routes_and_stops)
 
-    connecting_stops = get_connecting_stops(all_stops)
-
-    connecting_stops_and_route = get_connecting_stops_and_route(route_stops, connecting_stops)
+    connecting_stops_and_route = mbtaConnectingFetcher.get_connecting_stops_and_route(dict_of_routes_and_stops, connecting_stops)
     
-
-    log_multi_route_stops(connecting_stops_and_route)
+    log_subway_stops_and_routes(connecting_stops_and_route)
 
     end = time.time()
 
