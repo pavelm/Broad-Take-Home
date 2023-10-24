@@ -46,7 +46,7 @@ def most_and_least_elements(dictionary):
     print()
 
     logging.info("Route with the least number of stops: %s", min_key)
-    logging.info("Number of stops: %s\n", min_elements)
+    logging.info("Number of stops: %s", min_elements)
 
 def log_multi_route_stops(subway_stops):
     if not subway_stops:
@@ -73,9 +73,10 @@ def main():
     mbta_routes = mbtaRoutesFetcher.fetch_mbta_routes([RailType.LIGHT, RailType.HEAVY])
 
     list_of_subway_route_ids = mbtaRoutesFetcher.get_route_data(mbta_routes, ['id'])
+    mbta_routes_long_names = mbtaRoutesFetcher.get_route_data(mbta_routes, ['attributes', 'long_name'])
 
     # get the routes and their corresponding stops
-    route_stops = mbtaStopsFetcher.get_route_stops(list_of_subway_route_ids)
+    route_stops = mbtaStopsFetcher.run_get_dict_of_routes_and_stops(list_of_subway_route_ids, mbta_routes_long_names)
 
     most_and_least_elements(route_stops)
 
