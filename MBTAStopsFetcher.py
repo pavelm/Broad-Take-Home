@@ -1,7 +1,5 @@
 import logging
-import time
 from enum import IntEnum
-import requests
 import asyncio
 import aiohttp
 
@@ -17,7 +15,6 @@ class MBTAStopsFetcher:
         self.api_base_url = api_base_url
         self.api_key = api_key
 
-    
 
     # Coroutines are computer program components that allow execution
     # to be suspended and resumed, generalizing subroutines for cooperative multitasking
@@ -35,7 +32,7 @@ class MBTAStopsFetcher:
     # gets a dictionary of routes and their corresponding stops
     # https://www.youtube.com/watch?v=nFn4_nA_yk8
     # https://groups.google.com/g/massdotdevelopers/c/WiJUyGIpHdI
-    async def get_dict_of_routes_and_stops(self, list_of_subway_route_ids):
+    async def get_dict_of_routes_and_stops(self, list_of_subway_route_ids, mbta_routes_long_names):
         async with aiohttp.ClientSession() as session:
 
             tasks = self.get_tasks(session, list_of_subway_route_ids)
@@ -50,12 +47,12 @@ class MBTAStopsFetcher:
 
                 subway_line_data = subway_line_data['data']
 
-                route_stop_dict[list_of_subway_route_ids[index]] = []
+                route_stop_dict[mbta_routes_long_names[index]] = []
 
                 for stops in subway_line_data:
-                    route_stop_dict[list_of_subway_route_ids[index]].append((stops['attributes']['name']))
+                    route_stop_dict[mbta_routes_long_names[index]].append((stops['attributes']['name']))
 
             return route_stop_dict
         
-    def get_route_stops(self, list_of_subway_route_ids):
-        return asyncio.run(self.get_dict_of_routes_and_stops(list_of_subway_route_ids))
+    def run_get_dict_of_routes_and_stops(self, list_of_subway_route_ids, mbta_routes_long_names):
+        return asyncio.run(self.get_dict_of_routes_and_stops(list_of_subway_route_ids, mbta_routes_long_names))
