@@ -13,12 +13,27 @@ API_KEY = os.getenv("API_KEY")
 logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
 
 
-# get all the subway stops
 def get_all_stops(route_stops):
-   return [stop for stops in route_stops.values() for stop in stops]
+    all_stops = []
 
-def get_connecting_stops(all_stops):
-   return dict(sorted(Counter(all_stops).items(), key=lambda item: item[1], reverse=True))
+    for stops in route_stops.values():
+        if isinstance(stops, dict):
+            get_all_stops(stops, all_stops)
+        elif isinstance(stops, list):
+            all_stops.extend(stops)
+
+    return all_stops
+
+def get_connecting_stops(all_stops, min_count=2):
+    stop_counts = Counter(all_stops)
+
+    # Filter stops based on the minimum count
+    filtered_stops = {stop: count for stop, count in stop_counts.items() if count >= min_count}
+
+    # Sort the stops by count in descending order
+    sorted_stops = dict(sorted(filtered_stops.items(), key=lambda item: item[1], reverse=True))
+
+    return sorted_stops
 
 def get_connecting_stops_and_route(route_stops, stop_counts):
     connecting_stops = {}
