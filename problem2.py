@@ -1,7 +1,6 @@
 import logging
 import time
-import asyncio
-import aiohttp
+from collections import Counter, OrderedDict
 from MBTARoutesFetcher import MBTARoutesFetcher, RailType
 from MBTAStopsFetcher import MBTAStopsFetcher
 from dotenv import load_dotenv
@@ -14,80 +13,52 @@ API_KEY = os.getenv("API_KEY")
 logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
 
 
-
-
-# sorts the stops in length of stops
-def sort_route_stops(route_stops):
-    #  https://www.freecodecamp.org/news/sort-dictionary-by-value-in-python/
-    return dict(sorted(route_stops.items(), key=lambda x: len(x[1])))
-
-
-# print the  name of the subway route with the most stops as well as a count of its stops.
-def route_with_most_stops(sorted_route_dict):
-    logging.info("Subway route with the most number of stops: " + str(list(sorted_route_dict.keys())[-1]))
-    logging.info("Stops: " + str(len(list(sorted_route_dict.values())[-1])) + "\n")
-
-
-# print the name of the subway route with the fewest stops as well as a count of its stops.
-def route_with_least_stops(sorted_route_dict):
-    logging.info("Subway route with the least number of stops: " + str(list(sorted_route_dict.keys())[0]))
-    logging.info("Stops: " + str(len(list(sorted_route_dict.values())[0])) + "\n")
-
-
 # get all the subway stops
 def get_all_stops(route_stops):
-    # get all the stops
-    all_stops = []
+   return [stop for stops in route_stops.values() for stop in stops]
 
-    # gets all stops from dictionary
-    for stops in route_stops.values():
-        all_stops.extend(stops)
-
-    return all_stops
-
-
-# A list of the stops that connect two or more subway routes along with the relevant route names for each of those stops
 def get_connecting_stops(all_stops):
-    # list of connecting stops
-    connecting_stops = set()
+   return dict(sorted(Counter(all_stops).items(), key=lambda item: item[1], reverse=True))
 
-    # loop through each stop in all the subway stops
-    for stop in all_stops:
+def get_connecting_stops_and_route(route_stops, stop_counts):
+    connecting_stops = {}
+    
+    for stop, count in stop_counts.items():
+        if count > 1:
+            connecting_stops[stop] = [route for route, stops in route_stops.items() if stop in stops]
 
-        # if there are more than one stop, then it is a connecting stop
-        # check if the stop is already in the list (for the purpose of duplication)
-        if all_stops.count(stop) > 1:
-            connecting_stops.add(stop)
+    return connecting_stops
 
-    return list(connecting_stops)
+def most_and_least_elements(dictionary):
+    if not dictionary:
+        print("The dictionary is empty.")
+        return
 
+    max_key = max(dictionary, key=lambda key: len(dictionary[key]))
+    min_key = min(dictionary, key=lambda key: len(dictionary[key]))
 
-# gets the routes of all the connecting stops that travels through it
-def get_routes_of_connecting_stops(connecting_stops, route_stop_dict):
-    connecting_stops_dict = {}
+    max_elements = len(dictionary[max_key])
+    min_elements = len(dictionary[min_key])
 
-    # for each route
-    for route in route_stop_dict.keys():
+    logging.info("Route with the most number of stops: %s", max_key)
+    logging.info("Number of stops: %s", max_elements)
 
-        # for each connecting stop
-        for connecting_stop in connecting_stops:
+    print()
 
-            # if connecting stop is not accounted for, set connecting stop to dictionary with current route as key
-            if connecting_stop in route_stop_dict[route] and connecting_stop not in connecting_stops_dict:
-                connecting_stops_dict[connecting_stop] = [route]
+    logging.info("Route with the least number of stops: %s", min_key)
+    logging.info("Number of stops: %s\n", min_elements)
 
-            # if connecting stop is accounted for, add current route to list of routes @ connecting stop
-            elif connecting_stop in route_stop_dict[route] and connecting_stop in connecting_stops_dict:
-                connecting_stops_dict[connecting_stop] = connecting_stops_dict[connecting_stop] + [route]
+def log_multi_route_stops(subway_stops):
+    if not subway_stops:
+        logging.info("The subway stops dictionary is empty.")
+        return
 
-    return connecting_stops_dict
+    multi_route_stops = {stop: routes for stop, routes in subway_stops.items() if len(routes) >= 2}
 
-
-# prints the routes and their connecting stops
-def print_all_routes_of_connecting_stops(connecting_stops_dict):
-    for connecting_stop, list_of_route_names in connecting_stops_dict.items():
-        logging.info("Connecting Stop: " + connecting_stop)
-        logging.info("Routes at " + connecting_stop + ": " + str(list_of_route_names) + "\n")
+    for stop, routes in multi_route_stops.items():
+        logging.info(f"Stop: {stop}")
+        logging.info(f"Routes: {', '.join(routes)}")
+        print()
 
 
 def main():
@@ -106,27 +77,16 @@ def main():
     # get the routes and their corresponding stops
     route_stops = mbtaStopsFetcher.get_route_stops(list_of_subway_route_ids)
 
-    print(route_stops)
-    # sort route_stops
-    sorted_route_stop_dict = sort_route_stops(route_stops)
+    most_and_least_elements(route_stops)
 
-    # get all the stops on mbta
-    all_stops = get_all_stops(sorted_route_stop_dict)
+    all_stops = get_all_stops(route_stops)
 
-    # get stops with > 1 connections
     connecting_stops = get_connecting_stops(all_stops)
 
-    # route with the most stops
-    # route_with_most_stops(sorted_route_stop_dict)
+    connecting_stops_and_route = get_connecting_stops_and_route(route_stops, connecting_stops)
+    
 
-    # route with the least stops
-    # route_with_least_stops(sorted_route_stop_dict)
-
-    # stops on route line that are connecting to other route lines
-    routes_connecting_stop_dict = get_routes_of_connecting_stops(connecting_stops, sorted_route_stop_dict)
-
-    # print routes and their connecting stops
-    # print_all_routes_of_connecting_stops(routes_connecting_stop_dict)
+    log_multi_route_stops(connecting_stops_and_route)
 
     end = time.time()
 
